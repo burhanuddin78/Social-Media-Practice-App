@@ -8,7 +8,7 @@ export const HeaderMessage = () => {
 	const signupRoute = router.pathname === '/signup';
 	return (
 		<Message
-			cool='teal'
+			color='teal'
 			attached
 			header={signupRoute ? 'Get Started' : 'Welcome Back!'}
 			icon={signupRoute ? 'settings' : 'privacy'}

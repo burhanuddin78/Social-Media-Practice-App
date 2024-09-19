@@ -3,6 +3,12 @@ import { FooterMessage, HeaderMessage } from '../components/Common/WelcomeMessag
 import { Form, Button, Message, Segment, TextArea, Divider } from 'semantic-ui-react';
 import CommonInputs from '../components/Common/CommonInputs';
 import ImageDropDiv from '../components/Common/ImageDropDiv';
+import axios from 'axios';
+import baseUrl from '../utils/baseUrl';
+import { registerUser } from '../utils/authUser';
+import { uploadPic } from '../utils/uploadPicToCloudinary';
+
+let cancel;
 
 function login() {
 	const [user, setUser] = useState({
@@ -19,10 +25,13 @@ function login() {
 
 	const [showSocialLinks, setShowSocialLinks] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+
 	const [formLoading, setFormLoading] = useState(false);
 	const [errorMessage, setErrorMessage] = useState('');
+
 	const [usernameLoading, setUsernameLoading] = useState(false);
 	const [usernameAvailable, setUsernameAvailable] = useState(false);
+
 	const [media, setMedia] = useState(null);
 	const [mediaPreview, setMediaPreview] = useState(null);
 	const [highlighted, setHighlighted] = useState(false);
@@ -30,8 +39,21 @@ function login() {
 
 	const { name, username, email, password, bio } = user;
 
-	const handleSubmit = (event) => {
-		e.preventDefault();
+	const handleSubmit = async (event) => {
+		event.preventDefault();
+
+		setFormLoading(true);
+		let profilePicUrl = null;
+
+		if (media !== null) {
+			profilePicUrl = await uploadPic(media);
+		}
+
+		if (media !== null && !profilePicUrl) {
+			return setErrorMessage('Error Uploading Image');
+		}
+
+		await registerUser({ user, profilePicUrl }, setErrorMessage, setFormLoading);
 	};
 	const handleChangeInput = (event) => {
 		const { name, value, files } = event.target;
@@ -44,11 +66,47 @@ function login() {
 		}
 	};
 
+	const checkUsername = async () => {
+		try {
+			cancel = cancel && cancel();
+
+			const CancelToken = axios.CancelToken;
+
+			setUsernameLoading(true);
+			const res = await axios.get(`${baseUrl}/api/signup/${username}`, {
+				cancelToken: new CancelToken((canceler) => {
+					cancel = canceler;
+				}),
+			});
+
+			if (errorMessage !== null) setErrorMessage(null);
+			if (res.data === 'username_available') {
+				setUsernameAvailable(true);
+				setUser((prev) => ({ ...prev, username }));
+				setErrorMessage('');
+			} else {
+				setUsernameAvailable(false);
+				setErrorMessage('Username Not Available');
+			}
+		} catch (error) {
+			setErrorMessage('Username Not Available');
+		}
+		setUsernameLoading(false);
+	};
+	useEffect(() => {
+		if (username == '') {
+			setUsernameAvailable(false);
+		} else {
+			checkUsername();
+		}
+	}, [username]);
+
 	return (
 		<>
 			{' '}
 			<HeaderMessage />
 			<Form
+				autoComplete='off'
 				loading={formLoading}
 				error={errorMessage !== null}
 				onSubmit={handleSubmit}>
@@ -102,7 +160,7 @@ function login() {
 						fluid
 						icon={{
 							name: 'eye',
-							circle: true,
+							circle: 'true',
 							link: true,
 							onClick: () => setShowPassword(!showPassword),
 						}}
@@ -112,6 +170,7 @@ function login() {
 
 					<Form.Input
 						required
+						autoComplete='off'
 						loading={usernameLoading}
 						error={!usernameAvailable}
 						label='Username'
