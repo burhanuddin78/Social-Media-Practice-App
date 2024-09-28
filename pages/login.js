@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FooterMessage, HeaderMessage } from '../components/Common/WelcomeMessage';
 import { Form, Button, Message, Segment, TextArea, Divider } from 'semantic-ui-react';
 import { loginUser } from '../utils/authUser';
+import cookies from 'js-cookie';
 
 function login() {
 	const [user, setUser] = useState({
@@ -25,6 +26,13 @@ function login() {
 		event.preventDefault();
 		await loginUser({ user }, setErrorMessage, setFormLoading);
 	};
+
+	useEffect(() => {
+		document.title = 'Welcome Back';
+
+		const userEmail = cookies.get('userEmail');
+		if (userEmail) setUser((prev) => ({ ...prev, email: userEmail }));
+	}, []);
 
 	return (
 		<>

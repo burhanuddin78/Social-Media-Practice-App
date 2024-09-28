@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const uploadPic = async (media) => {
 	try {
-		const form = new Form();
+		const form = new FormData();
 		form.append('file', media);
 		form.append('upload_preset', 'social_blog');
 		form.append('cloud_name', 'dcrx7yfaq');
