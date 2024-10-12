@@ -11,13 +11,13 @@ const FollowerSchema = new Schema({
 
 	followers: [
 		{
-			user: { type: Schema.Types.ObjectId },
+			user: { type: Schema.Types.ObjectId, ref: 'User' },
 		},
 	],
 
 	following: [
 		{
-			user: { type: Schema.Types.ObjectId },
+			user: { type: Schema.Types.ObjectId, ref: 'User' },
 		},
 	],
 });

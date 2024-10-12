@@ -1,9 +1,11 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const UserModel = require('../models/UserModel');
 const PostModel = require('../models/PostModel');
 const FollowerModel = require('../models/FollowerModel');
+const ObjectId = mongoose.Types.ObjectId;
 const uuid = require('uuid').v4;
 
 // CREATE A POST
@@ -38,19 +40,139 @@ router.get('/', authMiddleware, async (req, res) => {
 	const { pageNumber } = req.query;
 
 	const number = Number(pageNumber);
-	const size = 8;
+	const limit = 8;
+	const skip = limit * (number - 1);
+	const currentUser = ObjectId(req.userId);
 
 	try {
-		let posts;
-
-		if (number === 1) {
-			posts = await PostModel.find().limit(size).sort({ createdAt: -1 }).populate('user').populate('comments.user');
-		}
-		//
-		else {
-			const skips = size * (number - 1);
-			posts = await PostModel.find().skip(skips).limit(size).sort({ createdAt: -1 }).populate('user').populate('comments.user');
-		}
+		const posts = await FollowerModel.aggregate([
+			{
+				$match: {
+					user: currentUser,
+				},
+			},
+			{ $unwind: { path: '$following' } },
+			{
+				$addFields: {
+					allUserIds: {
+						$concatArrays: [[currentUser], ['$following.user']],
+					},
+				},
+			},
+			{
+				$lookup: {
+					from: 'posts',
+					let: { userIds: '$allUserIds' },
+					pipeline: [
+						{
+							$match: {
+								$expr: {
+									$in: ['$user', '$$userIds'],
+								},
+							},
+						},
+						{
+							$project: {
+								text: 1,
+								user: 1,
+								location: 1,
+								picUrl: 1,
+								likes: 1,
+								comments: 1,
+								createdAt: 1,
+							},
+						},
+					],
+					as: 'posts',
+				},
+			},
+			{ $unwind: { path: '$posts' } },
+			{
+				$lookup: {
+					from: 'users',
+					let: { userId: '$posts.user' },
+					pipeline: [
+						{
+							$match: {
+								$expr: { $eq: ['$_id', '$$userId'] },
+							},
+						},
+						{
+							$project: {
+								username: 1,
+								name: 1,
+								profilePicUrl: 1,
+							},
+						},
+					],
+					as: 'posts.user',
+				},
+			},
+			{
+				$addFields: {
+					'posts.user': {
+						$arrayElemAt: ['$posts.user', 0],
+					},
+				},
+			},
+			{
+				$lookup: {
+					from: 'users',
+					let: { user: '$posts.comments.user' },
+					pipeline: [
+						{
+							$match: {
+								$expr: { $in: ['$_id', '$$user'] },
+							},
+						},
+						{
+							$project: {
+								username: 1,
+								name: 1,
+								profilePicUrl: 1,
+							},
+						},
+					],
+					as: 'posts.commentDetails',
+				},
+			},
+			{
+				$addFields: {
+					'posts.comments': {
+						$map: {
+							input: '$posts.comments',
+							as: 'comment',
+							in: {
+								$mergeObjects: [
+									'$$comment',
+									{
+										user: {
+											$arrayElemAt: [
+												{
+													$filter: {
+														input: '$posts.commentDetails',
+														as: 'userDetail',
+														cond: {
+															$eq: ['$$userDetail._id', '$$comment.user'],
+														},
+													},
+												},
+												0,
+											],
+										},
+									},
+								],
+							},
+						},
+					},
+				},
+			},
+			{ $unset: 'posts.commentDetails' },
+			{ $replaceRoot: { newRoot: '$posts' } },
+			{ $sort: { createdAt: -1 } },
+			{ $skip: skip },
+			{ $limit: limit },
+		]);
 
 		return res.json(posts);
 	} catch (error) {

@@ -63,7 +63,7 @@ function CardPost({ post, user, setPosts, setShowToaster }) {
 							floated='left'
 							avatar
 							circular
-							src={post.user.profilePicUrl}
+							src={post?.user?.profilePicUrl}
 						/>
 
 						{user.role == 'root' ||
@@ -98,7 +98,9 @@ function CardPost({ post, user, setPosts, setShowToaster }) {
 					</Card.Content>
 
 					<Card.Header>
-						<Link href={`/${post.user.username}`}>{/* <a>{post.user.name}</a> */}</Link>
+						<Link href={`/${post.user.username}`}>
+							<>{post.user.name}</>
+						</Link>
 					</Card.Header>
 
 					<Card.Meta>{calculateTime(post.createdAt)}</Card.Meta>

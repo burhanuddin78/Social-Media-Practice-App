@@ -1,7 +1,10 @@
 import React from 'react';
 import { Form, Header, Icon, Image, Segment } from 'semantic-ui-react';
+import { useRouter } from 'next/router';
 
-function ImageDropDiv({ highlighted, setHighlighted, mediaPreview, setMediaPreview, setMedia, inputRef, handleChange }) {
+function ImageDropDiv({ highlighted, setHighlighted, mediaPreview, setMediaPreview, setMedia, inputRef, handleChange, profilePicUrl }) {
+	const router = useRouter();
+	const signupRouter = router.pathname === '/sign';
 	return (
 		<>
 			{' '}
@@ -36,19 +39,31 @@ function ImageDropDiv({ highlighted, setHighlighted, mediaPreview, setMediaPrevi
 					<div>
 						{mediaPreview == null ? (
 							<>
-								<Segment
-									color={highlighted ? 'green' : ''}
-									placeholder
-									basic>
-									<Header icon>
-										<Icon
-											name='file image outline'
+								{signupRouter === null ? (
+									<Segment
+										color={highlighted ? 'green' : ''}
+										placeholder
+										basic>
+										<Header icon>
+											<Icon
+												name='file image outline'
+												style={{ cursor: 'pointer' }}
+												onClick={() => inputRef.current.click()}
+											/>
+											Drag n Drop or click to Upload Image
+										</Header>
+									</Segment>
+								) : (
+									<span style={{ textAlign: 'center' }}>
+										<Image
+											src={profilePicUrl}
 											style={{ cursor: 'pointer' }}
 											onClick={() => inputRef.current.click()}
+											size='huge'
+											centered
 										/>
-										Drag n Drop or click to Upload Image
-									</Header>
-								</Segment>
+									</span>
+								)}
 							</>
 						) : (
 							<>
