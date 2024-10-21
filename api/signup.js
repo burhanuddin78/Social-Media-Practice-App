@@ -5,6 +5,7 @@ const router = express.Router();
 const UserModel = require('../models/UserModel');
 const ProfileModel = require('../models/ProfileModel');
 const FollowerModel = require('../models/FollowerModel');
+const NotificationModel = require('../models/NotificationModel');
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -62,6 +63,7 @@ router.post('/', async (req, res) => {
 
 		await new ProfileModel(profileFields).save();
 		await new FollowerModel({ user: user._id, followers: [], following: [] }).save();
+		await new NotificationModel({ user: user._id, notifications: [] }).save();
 
 		const payload = {
 			userId: user._id,

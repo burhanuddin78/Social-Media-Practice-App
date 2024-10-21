@@ -4,6 +4,7 @@ const router = express.Router();
 
 const UserModel = require('../models/UserModel');
 const FollowerModel = require('../models/FollowerModel');
+const NotificationModel = require('../models/NotificationModel');
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -42,6 +43,11 @@ router.post('/', async (req, res) => {
 		const payload = {
 			userId: user._id,
 		};
+
+		const notificationModel = await NotificationModel.findOne({ user: user._id });
+		if (!notificationModel) {
+			await new NotificationModel({ user: user._id, notifications: [] }).save();
+		}
 
 		const token = await jwt.sign(payload, process.env.jwtSecret, { expiresIn: '2d' });
 
