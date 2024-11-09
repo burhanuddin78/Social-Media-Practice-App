@@ -31,6 +31,10 @@ const userSchema = new Schema(
 			type: Boolean,
 			default: true,
 		},
+		unreadMessage: {
+			type: Boolean,
+			default: false,
+		},
 		unreadNotification: {
 			type: Boolean,
 			default: true,

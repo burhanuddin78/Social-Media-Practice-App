@@ -10,6 +10,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const isEmail = require('validator/lib/isEmail');
 const authMiddleware = require('../middleware/authMiddleware');
+const ChatModel = require('../models/ChatModel');
 
 router.get('/', authMiddleware, async (req, res, next) => {
 	const { userId } = req;
@@ -44,9 +45,9 @@ router.post('/', async (req, res) => {
 			userId: user._id,
 		};
 
-		const notificationModel = await NotificationModel.findOne({ user: user._id });
-		if (!notificationModel) {
-			await new NotificationModel({ user: user._id, notifications: [] }).save();
+		const chatModel = await ChatModel.findOne({ user: user._id });
+		if (!chatModel) {
+			await new ChatModel({ user: user._id, notifications: [] }).save();
 		}
 
 		const token = await jwt.sign(payload, process.env.jwtSecret, { expiresIn: '2d' });

@@ -27,7 +27,7 @@ function login() {
 	const [showPassword, setShowPassword] = useState(false);
 
 	const [formLoading, setFormLoading] = useState(false);
-	const [errorMessage, setErrorMessage] = useState('');
+	const [errorMessage, setErrorMessage] = useState(null);
 
 	const [usernameLoading, setUsernameLoading] = useState(false);
 	const [usernameAvailable, setUsernameAvailable] = useState(false);
